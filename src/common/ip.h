@@ -105,6 +105,8 @@ struct ip_packet
 
 #ifndef __KERNEL__ /* already provided by Linux kernel */
 
+#include <string.h>
+
 static inline uint16_t swab16(const uint16_t value)
 	__attribute__((warn_unused_result, const));
 
@@ -202,73 +204,30 @@ static inline uint16_t ip_fast_csum(const uint8_t *const iph,
 {
 	const uint8_t *buff = iph;
 	size_t len = ihl * 4;
-	bool odd;
-	size_t count;
+	size_t i;
 	uint32_t result = 0;
+	uint16_t checksum;
 
-	if(len == 0)
+	for(i = 0; i + 1 < len; i += 2)
 	{
-		goto out;
-	}
-	odd = 1 & (uintptr_t) buff;
-	if(odd)
-	{
+		uint16_t word;
+		memcpy(&word, buff + i, sizeof(uint16_t));
 #ifdef __LITTLE_ENDIAN
-		result = *buff;
+		result += swab16(word);
 #else
-		result += (*buff << 8);
-#endif
-		len--;
-		buff++;
-	}
-	count = len >> 1; /* nr of 16-bit words.. */
-	if(count)
-	{
-		if(2 & (uintptr_t) buff)
-		{
-			result += *(uint16_t *) buff;
-			count--;
-			len -= 2;
-			buff += 2;
-		}
-		count >>= 1; /* nr of 32-bit words.. */
-		if(count)
-		{
-			uint32_t carry = 0;
-			do
-			{
-				uint32_t word = *(uint32_t *) buff;
-				count--;
-				buff += sizeof(uint32_t);
-				result += carry;
-				result += word;
-				carry = (word > result);
-			}
-			while(count);
-			result += carry;
-			result = (result & 0xffff) + (result >> 16);
-		}
-		if(len & 2)
-		{
-			result += *(uint16_t *) buff;
-			buff += 2;
-		}
-	}
-	if(len & 1)
-	{
-#ifdef __LITTLE_ENDIAN
-		result += *buff;
-#else
-		result += (*buff << 8);
+		result += word;
 #endif
 	}
-	result = from32to16(result);
-	if(odd)
+	if(i < len)
 	{
-		result = ((result >> 8) & 0xff) | ((result & 0xff) << 8);
+		result += (uint32_t) (buff[i] << 8);
 	}
-out:
-	return ~result;
+
+	checksum = (uint16_t) ~from32to16(result);
+#ifdef __LITTLE_ENDIAN
+	checksum = swab16(checksum);
+#endif
+	return checksum;
 }
 
 
