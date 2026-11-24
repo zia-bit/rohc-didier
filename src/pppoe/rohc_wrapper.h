@@ -446,17 +446,17 @@ private:
     bool profile_tcp_enabled_{false};
 
     /// 压缩临时缓冲区（就地处理用）
-    uint8_t comp_buffer_[ROHC_COMP_BUFFER_SIZE];
+    alignas(4) uint8_t comp_buffer_[ROHC_COMP_BUFFER_SIZE];
 
     /// 解压临时缓冲区（就地处理用）
-    uint8_t decomp_buffer_[ROHC_DECOMP_BUFFER_SIZE];
+    alignas(4) uint8_t decomp_buffer_[ROHC_DECOMP_BUFFER_SIZE];
 
     /// Piggyback封装临时缓冲区
-    uint8_t piggyback_buffer_[ROHC_MAX_PACKET_LEN];
+    alignas(4) uint8_t piggyback_buffer_[ROHC_MAX_PACKET_LEN];
 
     /// 解压提取临时缓冲区
-    uint8_t extract_rohc_buffer_[ROHC_MAX_PACKET_LEN];
-    uint8_t extract_feedback_buffer_[ROHC_MAX_FEEDBACK_LEN];
+    alignas(4) uint8_t extract_rohc_buffer_[ROHC_MAX_PACKET_LEN];
+    alignas(4) uint8_t extract_feedback_buffer_[ROHC_MAX_FEEDBACK_LEN];
 };
 
 #endif // ROHC_WRAPPER_H
